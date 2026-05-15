@@ -68,8 +68,12 @@
             </div>
         </div>
 
-        <div class="result-box" id="codified-output">B O A E</div>
+        <div style="display: flex; gap: 10px; align-items: stretch; margin-top: 20px;">
+            <div class="result-box" id="codified-output" style="flex-grow: 1; margin-top: 0;">B O A E</div>
+            <button onclick="copyToClipboard()" style="background-color: #f39c12; margin-top: 0;">Copiar</button>
+        </div>
         <div class="translation-box" id="codified-translation">BDU ordena a todos: Fin.</div>
+        
     </div>
 
     <div class="section">
@@ -172,6 +176,21 @@
         document.getElementById('translation-output').innerText = result.join(' ');
     }
 
+    // Función para copiar el texto codificado al portapapeles
+    function copyToClipboard() {
+        // Obtenemos el texto actual dentro de la caja de resultado
+        const textToCopy = document.getElementById('codified-output').innerText;
+        
+        // Usamos la API de Clipboard del navegador para copiar el texto
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            // Mostramos una pequeña alerta (opcional) para confirmar que se copió
+            alert("¡Mensaje copiado al portapapeles!");
+        }).catch(err => {
+            // En caso de error, lo mostramos en la consola
+            console.error("Hubo un error al copiar el texto: ", err);
+        });
+    }
+    
     // Inicializar
     updateCodification();
 </script>

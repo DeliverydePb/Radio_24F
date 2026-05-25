@@ -5,18 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Codificador de Radio WPC</title>
     <style>
-        body { font-family: sans-serif; background-color: #f4f4f9; padding: 20px; color: #333; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1, h2 { color: #2c3e50; border-bottom: 2px solid #eee; pb: 10px; }
-        .section { margin-bottom: 30px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
-        .row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
-        select, input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+	
+        body { 
+			font-family: sans-serif; 
+			background-color: #1a1a24; /* Fondo principal oscuro */
+			padding: 20px; 
+			color: #e0e0e0; /* Texto claro para que se lea bien */
+		}
+		
+        .container { 
+			max-width: 900px; 
+			margin: auto; 
+			background: #2a2a35; /* Gris oscuro, pero más claro que el body */
+			padding: 20px; 
+			border-radius: 8px; 
+			box-shadow: 0 4px 15px rgba(0,0,0,0.5); /* Sombra más fuerte para dar profundidad */
+		}
+		
+		h1, h2 { 
+			color: #74b9ff; /* Azul claro pastel */
+			border-bottom: 2px solid #3d3d4e; /* Línea divisoria oscura */
+			padding-bottom: 10px; 
+		}
+		
+		.section { 
+			margin-bottom: 30px; 
+			padding: 15px; 
+			border: 1px solid #3d3d4e; /* Borde oscuro */
+			border-radius: 5px; 
+			background-color: #23232e; /* Fondo sutilmente distinto para agrupar elementos */
+		}
+
+        .row {
+			display: flex;
+			gap: 10px;
+			margin-bottom: 10px;
+			align-items: center;
+			flex-wrap: wrap;
+		}
+
+		select, input { 
+			padding: 8px; 
+			border: 1px solid #4a4a5e; 
+			border-radius: 4px; 
+			background-color: #333342; /* Fondo de la caja de texto */
+			color: #ffffff; /* Letras blancas al escribir */
+		}
+		
+		input::placeholder { 
+			color: #888; /* Color gris para el texto de sugerencia */
+		}
+
         button { padding: 8px 15px; cursor: pointer; border: none; border-radius: 4px; background-color: #3498db; color: white; transition: 0.3s; }
         button:hover { background-color: #2980b9; }
         button.add-btn { background-color: #27ae60; font-weight: bold; }
-        .result-box { margin-top: 20px; padding: 15px; background: #eef2f3; border-left: 5px solid #3498db; font-family: monospace; font-size: 1.2em; min-height: 1.5em; }
-        .translation-box { color: #555; font-style: italic; margin-top: 5px; }
-        .segment { border-left: 3px solid #27ae60; padding-left: 10px; margin-left: 5px; }
+
+		.result-box { 
+			margin-top: 20px; 
+			padding: 15px; 
+			background: #1e272e; /* Fondo muy oscuro, casi negro */
+			border-left: 5px solid #0984e3; 
+			font-family: monospace; 
+			font-size: 1.2em; 
+			min-height: 1.5em; 
+			color: #00d2d3; /* Texto color cyan para que el código destaque */
+		}
+		
+		.translation-box { 
+			color: #b2bec3; /* Gris claro apagado para no robar atención */
+			font-style: italic; 
+			margin-top: 5px; 
+		}
+
+		.segment { 
+			border-left: 3px solid #27ae60; 
+			padding-left: 10px; 
+			margin-left: 5px; 
+			background-color: #2a2a35; /* Le da un fondo propio al bloque */
+			padding-top: 10px;
+			padding-bottom: 10px;
+			border-radius: 0 4px 4px 0;
+		}
+
     </style>
 </head>
 <body>
@@ -120,7 +190,7 @@
                 <option value="">(Sin Parám.)</option>
                 ${Object.entries(DATA.parametro).map(([k,v]) => `<option value="${k}">${v} (${k})</option>`).join('')}
             </select>
-            <input type="text" class="s-val" placeholder="Valor (ej: 82G)" oninput="updateCodification()" style="width:80px">
+            <input type="text" class="s-val" placeholder="Valor (ej: 82G)" oninput="updateCodification()" style="width:125px">
             <select class="s-est" onchange="updateCodification()">
                 <option value="">(Sin Estado)</option>
                 ${Object.entries(DATA.estado).map(([k,v]) => `<option value="${k}">${v} (${k})</option>`).join('')}

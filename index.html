@@ -40,9 +40,10 @@
                 <label>Tipo:</label>
                 <select id="c-tipo" onchange="updateCodification()">
                     <option value="O">Orden (O)</option>
-                    <option value="1">Pregunta (1)</option>
+                    <option value="Q">Pregunta (Q)</option>
                     <option value="I">Informa (I)</option>
                     <option value="S">Solicitud (S)</option>
+                    <option value="C">Confirmación (C)</option>
                 </select>
 
                 <label>Receptor:</label>
@@ -88,19 +89,21 @@
     // Diccionarios basados en el documento [cite: 1, 4, 11, 23, 34, 47]
     const DATA = {
         emisor: { "B": "BDU", "6": "U96", "2": "U552", "4": "U564", "7": "U307" },
-        tipo: { "O": "Ordena", "1": "Pregunta", "I": "Informa", "S": "Solicita" },
+        tipo: { "O": "Ordena", "Q": "Pregunta", "I": "Informa", "S": "Solicita", "C":  "Confirmación"},
         receptor: { "B": "a BDU", "6": "a U96", "2": "a U552", "4": "a U564", "7": "a U307", "A": "a todos los submarinos" },
         objeto: { 
-            "SU": "Submarino", "CON": "Convoy", "SON": "Contacto Hidro", "TOI": "Tiempo impacto",
-            "ES": "Escolta", "PL": "Pasajeros", "HT": "Tanquero pesado", "HF": "Carguero pesado"
+            "SU": "Submarino", "CON": "Convoy", "TOI": "Tiempo impacto", "VIS ": "Contacto Visual", "HID": "Contacto Hidro",
+            "BG": "Buque de Guerra", "ME": "Mercante", "PL": "Pasajeros", "HT": "Tanquero pesado"
         },
         parametro: { 
-            "POS": "Posición", "C": "Rumbo", "D": "Distancia", "V": "Velocidad", "D": "Demora",
+            "POS": "Posición", "C": "Rumbo", "D": "Distancia", "V": "Velocidad", "DIR ": "Dirección", "AOB": "Angle on bow",
+            "PR": "Proa", "PP": "Popa", "ES": "Estribor", "BR": "Babor",
+            "NR": "Norte", "SR": "Sur", "ES": "Este", "OE": "Oeste",
             "TIW": "Torpedos en agua", "TOR": "Torpedos restantes", "IDN": "Identificación", "PSD": "Permanecer sin detectar" 
         },
         estado: { 
-            "OK": "Confirmado", "CNT": "Sin quejas", "NOT": "Denegado", "SOS": "Auxilio inmediato", 
-            "INM": "Inmersión profunda", "EME": "Inmersión emergencia", "FIN COM": "Retirada combate", "FIN": "Retirada misión" 
+            "CR": "Confirmación requerida", "SI": "Confirmado", "NO": "Denegado", "OK": "Sin quejas", "SOS": "Auxilio inmediato", 
+            "INM": "Inmersión profunda", "EME": "Inmersión emergencia", "FCO": "Retirada combate", "FMI": "Retirada misión" 
         }
     };
 

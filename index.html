@@ -77,15 +77,23 @@
 			margin-top: 5px; 
 		}
 
-		.segment { 
-			border-left: 3px solid #27ae60; 
-			padding-left: 10px; 
-			margin-left: 5px; 
-			background-color: #2a2a35; /* Le da un fondo propio al bloque */
-			padding-top: 10px;
-			padding-bottom: 10px;
-			border-radius: 0 4px 4px 0;
-		}
+        .segment { 
+            border-left: 3px solid #00b894; 
+            padding-left: 10px; 
+            margin-left: 5px; 
+            background-color: #2a2a35;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-radius: 0 4px 4px 0;
+            flex-wrap: nowrap; /* Fuerza a que todo quede en un solo renglón */
+            overflow-x: auto; /* Agrega scroll horizontal solo si la pantalla es diminuta */
+        }
+
+        /* Limita el ancho de los selectores dentro de los segmentos */
+        .segment select {
+            max-width: 140px; 
+            text-overflow: ellipsis; /* Agrega "..." si el texto es muy largo */
+        }
 
     </style>
 </head>
@@ -101,28 +109,28 @@
                 <label>Emisor:</label>
                 <select id="c-emisor" onchange="updateCodification()">
                     <option value="B">BDU (B)</option>
-                    <option value="6">U96 (6)</option>
-                    <option value="2">U552 (2)</option>
-                    <option value="4">U564 (4)</option>
-                    <option value="7">U307 (7)</option>
+                    <option value="Z">U96 (Z)</option>
+                    <option value="W">U552 (W)</option>
+                    <option value="R">U564 (R)</option>
+                    <option value="U">U307 (U)</option>
                 </select>
 
                 <label>Tipo:</label>
                 <select id="c-tipo" onchange="updateCodification()">
-                    <option value="O">Orden (O)</option>
-                    <option value="Q">Pregunta (Q)</option>
-                    <option value="I">Informa (I)</option>
-                    <option value="S">Solicitud (S)</option>
-                    <option value="C">Confirmación (C)</option>
+                    <option value="ON">Orden (ON)</option>
+                    <option value="QS">Pregunta (QS)</option>
+                    <option value="IA">Informa (IA)</option>
+                    <option value="SA">Solicitud (SA)</option>
+                    <option value="CN">Confirmación (CN)</option>
                 </select>
 
                 <label>Receptor:</label>
                 <select id="c-receptor" onchange="updateCodification()">
                     <option value="B">BDU (B)</option>
-                    <option value="6">U96 (6)</option>
-                    <option value="2">U552 (2)</option>
-                    <option value="4">U564 (4)</option>
-                    <option value="7">U307 (7)</option>
+                    <option value="Z">U96 (Z)</option>
+                    <option value="W">U552 (W)</option>
+                    <option value="R">U564 (R)</option>
+                    <option value="U">U307 (U)</option>
                     <option value="A">Todos (A)</option>
                 </select>
             </div>
@@ -140,7 +148,7 @@
         </div>
 
         <div style="display: flex; gap: 10px; align-items: stretch; margin-top: 20px;">
-            <div class="result-box" id="codified-output" style="flex-grow: 1; margin-top: 0;">B O A E</div>
+            <div class="result-box" id="codified-output" style="flex-grow: 1; margin-top: 0;">B ON A E</div>
             <button onclick="copyToClipboard()" style="background-color: #f39c12; margin-top: 0;">Copiar</button>
         </div>
         <div class="translation-box" id="codified-translation">BDU ordena a todos: Fin.</div>
@@ -150,7 +158,7 @@
     <div class="section">
         <h2>Traducir Mensaje Armado</h2>
         <p><small>Introduce las abreviaturas separadas por espacios para ver la traducción.</small></p>
-        <input type="text" id="t-input" style="width: 80%;" placeholder="Ej: 7 R B SU P 82G E" oninput="translateRaw()">
+        <input type="text" id="t-input" style="width: 80%;" placeholder="Ej: Z QS B SUBM POSI 082G E" oninput="translateRaw()">
         <div class="result-box" id="translation-output">---</div>
     </div>
 </div>
@@ -158,24 +166,40 @@
 <script>
     // Diccionarios basados en el documento [cite: 1, 4, 11, 23, 34, 47]
     const DATA = {
-        emisor: { "B": "BDU", "6": "U96", "2": "U552", "4": "U564", "7": "U307" },
-        tipo: { "O": "Ordena", "Q": "Pregunta", "I": "Informa", "S": "Solicita", "C":  "Confirmación"},
-        receptor: { "B": "a BDU", "6": "a U96", "2": "a U552", "4": "a U564", "7": "a U307", "A": "a todos los submarinos" },
+        emisor: { "B": "BDU", "Z": "U96", "W": "U552", "R": "U564", "U": "U307" },
+        tipo: { "ON": "Ordena", "QS": "Pregunta", "IA": "Informa", "SA": "Solicita", "CN":  "Confirmación"},
+        receptor: { "B": "a BDU", "Z": "a U96", "W": "a U552", "R": "a U564", "U": "a U307", "A": "a todos los submarinos" },
         objeto: { 
-            "SU": "Submarino", "CON": "Convoy", "TOI": "Tiempo impacto", "VIS ": "Contacto Visual", "HID": "Contacto Hidro",
-            "BG": "Buque de Guerra", "ME": "Mercante", "PL": "Pasajeros", "HT": "Tanquero pesado"
+            "SUBM": "Submarino", "CONV": "Convoy", "TOIP": "Tiempo impacto", "VISU": "Contacto Visual", "HIDO": "Contacto Hidro",
+            "BUQG": "Buque de Guerra", "MECA": "Mercante", "PASA": "Pasajeros", "TANP": "Tanquero pesado"
         },
         parametro: { 
-            "POS": "Posición", "C": "Rumbo", "D": "Distancia", "V": "Velocidad", "DIR ": "Dirección", "AOB": "Angle on bow",
-            "PR": "Proa", "PP": "Popa", "ES": "Estribor", "BR": "Babor",
-            "NR": "Norte", "SR": "Sur", "ES": "Este", "OE": "Oeste",
-            "TIW": "Torpedos en agua", "TOR": "Torpedos restantes", "IDN": "Identificación", "PSD": "Permanecer sin detectar" 
+            "POSI": "Posición", "RUMB": "Rumbo", "DIST": "Distancia", "VELO": "Velocidad", "DIRE": "Dirección", "AONB": "Angle on bow",
+            "PROA": "Proa", "POPA": "Popa", "ESTR": "Estribor", "BABO": "Babor",
+            "NORT": "Norte", "SUUR": "Sur", "ESTE": "Este", "OEST": "Oeste",
+            "TORA": "Torpedos en agua", "TORE": "Torpedos restantes", "IDEN": "Identificación", "FURT": "Nav. Silenciosa" 
         },
         estado: { 
-            "CR": "Confirmación requerida", "SI": "Confirmado", "NO": "Denegado", "OK": "Sin quejas", "SOS": "Auxilio inmediato", 
+            "CONF": "Confirmación requerida", "SI": "Confirmado", "NO": "Denegado", "OK": "Sin quejas", "SOS": "Auxilio inmediato", 
             "INM": "Inmersión profunda", "EME": "Inmersión emergencia", "FCO": "Retirada combate", "FMI": "Retirada misión" 
         }
     };
+
+    // Reglas de sustitución para números
+    const numToChar = {'1':'Q', '2':'W', '3':'E', '4':'R', '5':'T', '6':'Z', '7':'U', '8':'I', '9':'O', '0':'P'};
+    const charToNum = {'Q':'1', 'W':'2', 'E':'3', 'R':'4', 'T':'5', 'Z':'6', 'U':'7', 'I':'8', 'O':'9', 'P':'0'};
+
+    // Función para codificar (Números -> Letras)
+    function encodeNumbers(str) {
+        if (!str) return str;
+        return str.toUpperCase().replace(/[0-9]/g, m => numToChar[m]);
+    }
+
+    // Función para decodificar (Letras -> Números)
+    function decodeNumbers(str) {
+        if (!str) return str;
+        return str.toUpperCase().split('').map(c => charToNum[c] || c).join('');
+    }
 
     function addSegment() {
         const container = document.getElementById('dynamic-segments');
@@ -190,7 +214,8 @@
                 <option value="">(Sin Parám.)</option>
                 ${Object.entries(DATA.parametro).map(([k,v]) => `<option value="${k}">${v} (${k})</option>`).join('')}
             </select>
-            <input type="text" class="s-val" placeholder="Valor (ej: 82G)" oninput="updateCodification()" style="width:125px">
+            <input type="text" class="s-val1" placeholder="Val 1" oninput="updateCodification()" style="width:70px" maxlength="4">
+            <input type="text" class="s-val2" placeholder="Val 2" oninput="updateCodification()" style="width:70px" maxlength="4">
             <select class="s-est" onchange="updateCodification()">
                 <option value="">(Sin Estado)</option>
                 ${Object.entries(DATA.estado).map(([k,v]) => `<option value="${k}">${v} (${k})</option>`).join('')}
@@ -209,18 +234,33 @@
         const tip = document.getElementById('c-tipo').value;
         const rec = document.getElementById('c-receptor').value;
 
-        msg.push(emi, tip, rec);
+        // Aplica el cifrado al emisor y al receptor
+        msg.push(encodeNumbers(emi), tip, encodeNumbers(rec));
         trans.push(DATA.emisor[emi], DATA.tipo[tip], DATA.receptor[rec]);
 
         document.querySelectorAll('.segment').forEach(seg => {
             const obj = seg.querySelector('.s-obj').value;
             const par = seg.querySelector('.s-par').value;
-            const val = seg.querySelector('.s-val').value;
+            const val1 = seg.querySelector('.s-val1').value;
+            const val2 = seg.querySelector('.s-val2').value;
             const est = seg.querySelector('.s-est').value;
 
             if(obj) { msg.push(obj); trans.push(DATA.objeto[obj]); }
             if(par) { msg.push(par); trans.push(DATA.parametro[par]); }
-            if(val) { msg.push(val); trans.push(val); }
+            if(val1) { 
+                // Rellena con ceros a la izquierda hasta llegar a 4 caracteres
+                let paddedVal1 = val1.padStart(4, '0');
+                msg.push(encodeNumbers(paddedVal1)); 
+                trans.push(paddedVal1); 
+            }
+
+            if(val2) { 
+                // Rellena con ceros a la izquierda hasta llegar a 4 caracteres
+                let paddedVal2 = val2.padStart(4, '0');
+                msg.push(encodeNumbers(paddedVal2)); 
+                trans.push(paddedVal2); 
+            }
+
             if(est) { msg.push(est); trans.push(DATA.estado[est]); }
         });
 
@@ -236,14 +276,36 @@
         let result = [];
 
         input.forEach((word, index) => {
-            if (index === 0 && DATA.emisor[word]) result.push(DATA.emisor[word]);
-            else if (index === 1 && DATA.tipo[word]) result.push(DATA.tipo[word]);
-            else if (index === 2 && DATA.receptor[word]) result.push(DATA.receptor[word]);
-            else if (DATA.objeto[word]) result.push(DATA.objeto[word]);
-            else if (DATA.parametro[word]) result.push(DATA.parametro[word]);
-            else if (DATA.estado[word]) result.push(DATA.estado[word]);
-            else if (word === "E") result.push("Fin.");
-            else result.push(word); // Mantiene valores numéricos o unidades
+            if (index === 0) {
+                // Posición 0: Emisor (descifrar primero)
+                let decEmi = decodeNumbers(word);
+                result.push(DATA.emisor[decEmi] || decEmi);
+            }
+            else if (index === 1 && DATA.tipo[word]) {
+                result.push(DATA.tipo[word]);
+            }
+            else if (index === 2) {
+                // Posición 2: Receptor (descifrar primero)
+                let decRec = decodeNumbers(word);
+                result.push(DATA.receptor[decRec] || decRec);
+            }
+            else if (DATA.objeto[word]) {
+                result.push(DATA.objeto[word]);
+            }
+            else if (DATA.parametro[word]) {
+                result.push(DATA.parametro[word]);
+            }
+            else if (DATA.estado[word]) {
+                result.push(DATA.estado[word]);
+            }
+            else if (word === "E" && index === input.length - 1) {
+                // Asegura que la "E" de cierre solo se traduzca si está al final absoluto del mensaje
+                result.push("Fin.");
+            }
+            else {
+                // Si la palabra no está en los diccionarios, es el campo de VALOR. Desciframos.
+                result.push(decodeNumbers(word)); 
+            }
         });
 
         document.getElementById('translation-output').innerText = result.join(' ');

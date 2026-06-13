@@ -180,8 +180,8 @@
             "TORA": "Torpedos en agua", "TORE": "Torpedos restantes", "IDEN": "Identificación", "FURT": "Nav. Silenciosa" 
         },
         estado: { 
-            "CONF": "Confirmación requerida", "SI": "Confirmado", "NO": "Denegado", "OK": "Sin quejas", "SOS": "Auxilio inmediato", 
-            "INM": "Inmersión profunda", "EME": "Inmersión emergencia", "FCO": "Retirada combate", "FMI": "Retirada misión" 
+            "CONF": "Confirmación requerida", "AFIR": "Afirmativo", "NEGA": "Negativo", "OKOK": "Sin quejas", "SOSS": "Auxilio inmediato", 
+            "INME": "Inmersión profunda", "EMER": "Inmersión emergencia", "FCOM": "Retirada combate", "FMIS": "Retirada misión" 
         }
     };
 
@@ -201,6 +201,45 @@
         return str.toUpperCase().split('').map(c => charToNum[c] || c).join('');
     }
 
+    function chunkString(str, size) {
+        const chunks = [];
+        for (let i = 0; i < str.length; i += size) {
+            chunks.push(str.substr(i, size));
+        }
+        return chunks;
+    }
+
+    function normalizeDigits(str) {
+        return (str || '').replace(/\D/g, '');
+    }
+
+    function formatQuadrant(value) {
+        const v = (value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const match = v.match(/^([A-Z]{2})(\d{1,4})$/);
+        if (!match) return null;
+        return [`CU${match[1]}`, match[2].padStart(4, '0')];
+    }
+
+    function formatAngle(value) {
+        const digits = normalizeDigits(value);
+        if (!digits) return null;
+        const angle = parseInt(digits, 10);
+        if (Number.isNaN(angle) || angle < 0 || angle > 360) return null;
+        return `G${angle.toString().padStart(3, '0')}`;
+    }
+
+    function formatDistance(value) {
+        const digits = normalizeDigits(value).padStart(6, '0');
+        if (!/^\d{6}$/.test(digits)) return null;
+        return [`D${digits.slice(0, 3)}`, `${digits.slice(3)}M`];
+    }
+
+    function formatTime(value) {
+        const digits = normalizeDigits(value).padStart(4, '0');
+        if (!/^\d{4}$/.test(digits)) return null;
+        return [`HH${digits.slice(0, 2)}`, `MM${digits.slice(2)}`];
+    }
+
     function addSegment() {
         const container = document.getElementById('dynamic-segments');
         const div = document.createElement('div');
@@ -214,8 +253,11 @@
                 <option value="">(Sin Parám.)</option>
                 ${Object.entries(DATA.parametro).map(([k,v]) => `<option value="${k}">${v} (${k})</option>`).join('')}
             </select>
-            <input type="text" class="s-val1" placeholder="Val 1" oninput="updateCodification()" style="width:70px" maxlength="4">
-            <input type="text" class="s-val2" placeholder="Val 2" oninput="updateCodification()" style="width:70px" maxlength="4">
+            <input type="text" class="s-cuad" placeholder="Cuadrante AB1234" oninput="updateCodification()" style="width:110px" maxlength="6">
+            <input type="text" class="s-ang" placeholder="Ángulo 045" oninput="updateCodification()" style="width:80px" maxlength="3">
+            <input type="text" class="s-dist" placeholder="Distancia 1234" oninput="updateCodification()" style="width:90px" maxlength="6">
+            <input type="text" class="s-time" placeholder="Hora HHMM" oninput="updateCodification()" style="width:80px" maxlength="4">
+            <input type="text" class="s-num" placeholder="Número (hasta 6 dígitos)" oninput="updateCodification()" style="width:140px" maxlength="6">
             <select class="s-est" onchange="updateCodification()">
                 <option value="">(Sin Estado)</option>
                 ${Object.entries(DATA.estado).map(([k,v]) => `<option value="${k}">${v} (${k})</option>`).join('')}
@@ -227,69 +269,149 @@
     }
 
     function updateCodification() {
-        let msg = [];
-        let trans = [];
+        const msg = [];
+        const trans = [];
 
         const emi = document.getElementById('c-emisor').value;
         const tip = document.getElementById('c-tipo').value;
         const rec = document.getElementById('c-receptor').value;
 
-        // Aplica el cifrado al emisor y al receptor
         msg.push(encodeNumbers(emi), tip, encodeNumbers(rec));
         trans.push(DATA.emisor[emi], DATA.tipo[tip], DATA.receptor[rec]);
 
         document.querySelectorAll('.segment').forEach(seg => {
             const obj = seg.querySelector('.s-obj').value;
             const par = seg.querySelector('.s-par').value;
-            const val1 = seg.querySelector('.s-val1').value;
-            const val2 = seg.querySelector('.s-val2').value;
+            const cuad = seg.querySelector('.s-cuad').value;
+            const ang = seg.querySelector('.s-ang').value;
+            const dist = seg.querySelector('.s-dist').value;
+            const time = seg.querySelector('.s-time').value;
+            const num = seg.querySelector('.s-num') ? seg.querySelector('.s-num').value : '';
             const est = seg.querySelector('.s-est').value;
 
-            if(obj) { msg.push(obj); trans.push(DATA.objeto[obj]); }
-            if(par) { msg.push(par); trans.push(DATA.parametro[par]); }
-            if(val1) { 
-                // Rellena con ceros a la izquierda hasta llegar a 4 caracteres
-                let paddedVal1 = val1.padStart(4, '0');
-                msg.push(encodeNumbers(paddedVal1)); 
-                trans.push(paddedVal1); 
+            if (obj) { msg.push(obj); trans.push(DATA.objeto[obj]); }
+            if (par) { msg.push(par); trans.push(DATA.parametro[par]); }
+
+            if (cuad) {
+                const quadBlocks = formatQuadrant(cuad);
+                if (quadBlocks) {
+                    const encodedQuadNum = encodeNumbers(quadBlocks[1]);
+                    msg.push(quadBlocks[0], encodedQuadNum);
+                    trans.push(`Cuadrante ${quadBlocks[0].slice(2)}${quadBlocks[1]}`);
+                }
             }
 
-            if(val2) { 
-                // Rellena con ceros a la izquierda hasta llegar a 4 caracteres
-                let paddedVal2 = val2.padStart(4, '0');
-                msg.push(encodeNumbers(paddedVal2)); 
-                trans.push(paddedVal2); 
+            if (ang) {
+                const angBlock = formatAngle(ang);
+                if (angBlock) {
+                    msg.push(angBlock);
+                    trans.push(`Ángulo ${angBlock.slice(1)}°`);
+                }
             }
 
-            if(est) { msg.push(est); trans.push(DATA.estado[est]); }
+            if (dist) {
+                const distBlocks = formatDistance(dist);
+                if (distBlocks) {
+                    const enc1 = distBlocks[0].slice(0,1) + encodeNumbers(distBlocks[0].slice(1));
+                    const enc2 = encodeNumbers(distBlocks[1].slice(0, distBlocks[1].length-1)) + distBlocks[1].slice(-1);
+                    msg.push(enc1, enc2);
+                    trans.push(`Distancia ${normalizeDigits(dist)} m`);
+                }
+            }
+
+            if (time) {
+                const timeBlocks = formatTime(time);
+                if (timeBlocks) {
+                    const encHH = timeBlocks[0].slice(0,2) + encodeNumbers(timeBlocks[0].slice(2));
+                    const encMM = timeBlocks[1].slice(0,2) + encodeNumbers(timeBlocks[1].slice(2));
+                    msg.push(encHH, encMM);
+                    trans.push(`Hora ${timeBlocks[0].slice(2)}:${timeBlocks[1].slice(2)}`);
+                }
+            }
+
+            if (seg.querySelector('.s-num')) {
+                const num = seg.querySelector('.s-num').value;
+                const digits = normalizeDigits(num);
+                if (digits) {
+                    // limit to 6 significant digits (can be changed if needed)
+                    const trimmed = digits.slice(-6).padStart(6, '0');
+                    const enc = encodeNumbers(trimmed); // 6 letters
+                    const block1 = 'N' + enc.slice(0,3);
+                    const block2 = enc.slice(3) + 'N';
+                    msg.push(block1, block2);
+                    trans.push(trimmed);
+                }
+            }
+
+            if (est) { msg.push(est); trans.push(DATA.estado[est]); }
         });
 
-        msg.push("E");
-        trans.push("Fin.");
+        msg.push('EPPP');
+        trans.push('Fin.');
 
-        document.getElementById('codified-output').innerText = msg.join(' ');
+        document.getElementById('codified-output').innerText = msg.join('');
         document.getElementById('codified-translation').innerText = trans.join(' ');
     }
 
     function translateRaw() {
-        const input = document.getElementById('t-input').value.trim().split(/\s+/);
-        let result = [];
+        const input = document.getElementById('t-input').value.replace(/\s+/g, '').toUpperCase();
+        const chunks = chunkString(input, 4);
+        const result = [];
 
-        input.forEach((word, index) => {
-            if (index === 0) {
-                // Posición 0: Emisor (descifrar primero)
-                let decEmi = decodeNumbers(word);
-                result.push(DATA.emisor[decEmi] || decEmi);
+        for (let i = 0; i < chunks.length; i++) {
+            const word = chunks[i];
+            if (i === 0) {
+                const em = decodeNumbers(word.charAt(0));
+                const tp = word.slice(1, 3);
+                const rc = decodeNumbers(word.charAt(3));
+                result.push(DATA.emisor[em] || em);
+                result.push(DATA.tipo[tp] || tp);
+                result.push(DATA.receptor[rc] || rc);
+                continue;
             }
-            else if (index === 1 && DATA.tipo[word]) {
-                result.push(DATA.tipo[word]);
+
+            if (word === 'EPPP') {
+                result.push('Fin.');
+                break;
             }
-            else if (index === 2) {
-                // Posición 2: Receptor (descifrar primero)
-                let decRec = decodeNumbers(word);
-                result.push(DATA.receptor[decRec] || decRec);
+
+            if (/^CU[A-Z]{2}$/.test(word) && chunks[i + 1] && /^[A-Z]{4}$/.test(chunks[i + 1])) {
+                const quadDigits = decodeNumbers(chunks[i + 1]);
+                result.push(`Cuadrante ${word.slice(2)}${quadDigits}`);
+                i += 1;
+                continue;
             }
-            else if (DATA.objeto[word]) {
+
+            if (/^G\d{3}$/.test(word)) {
+                result.push(`Ángulo ${parseInt(word.slice(1), 10)}°`);
+                continue;
+            }
+
+            if (/^N[A-Z]{3}$/.test(word) && chunks[i + 1] && /^[A-Z]{3}N$/.test(chunks[i + 1])) {
+                const encoded = word.slice(1) + chunks[i + 1].slice(0, 3);
+                const digits = decodeNumbers(encoded);
+                result.push(`Número ${digits.replace(/^0+/, '') || '0'}`);
+                i += 1;
+                continue;
+            }
+
+            if (/^D[A-Z]{3}$/.test(word) && chunks[i + 1] && /^[A-Z]{3}M$/.test(chunks[i + 1])) {
+                const part1 = decodeNumbers(word.slice(1));
+                const part2 = decodeNumbers(chunks[i + 1].slice(0, 3));
+                result.push(`Distancia ${part1 + part2} m`);
+                i += 1;
+                continue;
+            }
+
+            if (/^HH[A-Z]{2}$/.test(word) && chunks[i + 1] && /^MM[A-Z]{2}$/.test(chunks[i + 1])) {
+                const hh = decodeNumbers(word.slice(2));
+                const mm = decodeNumbers(chunks[i + 1].slice(2));
+                result.push(`Hora ${hh}:${mm}`);
+                i += 1;
+                continue;
+            }
+
+            if (DATA.objeto[word]) {
                 result.push(DATA.objeto[word]);
             }
             else if (DATA.parametro[word]) {
@@ -298,15 +420,10 @@
             else if (DATA.estado[word]) {
                 result.push(DATA.estado[word]);
             }
-            else if (word === "E" && index === input.length - 1) {
-                // Asegura que la "E" de cierre solo se traduzca si está al final absoluto del mensaje
-                result.push("Fin.");
-            }
             else {
-                // Si la palabra no está en los diccionarios, es el campo de VALOR. Desciframos.
-                result.push(decodeNumbers(word)); 
+                result.push(decodeNumbers(word));
             }
-        });
+        }
 
         document.getElementById('translation-output').innerText = result.join(' ');
     }

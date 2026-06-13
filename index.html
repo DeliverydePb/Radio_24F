@@ -5,77 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Codificador de Radio WPC</title>
     <style>
-	
+        /* Caja de tamaño más predecible y evitar overflow por padding */
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+
         body { 
-			font-family: sans-serif; 
-			background-color: #1a1a24; /* Fondo principal oscuro */
-			padding: 20px; 
-			color: #e0e0e0; /* Texto claro para que se lea bien */
-		}
-		
+            font-family: sans-serif; 
+            background-color: #1a1a24; /* Fondo principal oscuro */
+            color: #e0e0e0; /* Texto claro para que se lea bien */
+        }
+
+        /* Contenedor ahora usa todo el ancho disponible sin límite fijo */
         .container { 
-			max-width: 900px; 
-			margin: auto; 
-			background: #2a2a35; /* Gris oscuro, pero más claro que el body */
-			padding: 20px; 
-			border-radius: 8px; 
-			box-shadow: 0 4px 15px rgba(0,0,0,0.5); /* Sombra más fuerte para dar profundidad */
-		}
-		
-		h1, h2 { 
-			color: #74b9ff; /* Azul claro pastel */
-			border-bottom: 2px solid #3d3d4e; /* Línea divisoria oscura */
-			padding-bottom: 10px; 
-		}
-		
-		.section { 
-			margin-bottom: 30px; 
-			padding: 15px; 
-			border: 1px solid #3d3d4e; /* Borde oscuro */
-			border-radius: 5px; 
-			background-color: #23232e; /* Fondo sutilmente distinto para agrupar elementos */
-		}
+            width: 100%; 
+            max-width: none; 
+            margin: 0; 
+            background: #2a2a35; /* Gris oscuro, pero más claro que el body */
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); /* Sombra más fuerte para dar profundidad */
+        }
+
+        h1, h2 { 
+            color: #74b9ff; /* Azul claro pastel */
+            border-bottom: 2px solid #3d3d4e; /* Línea divisoria oscura */
+            padding-bottom: 10px; 
+        }
+
+        .section { 
+            margin-bottom: 30px; 
+            padding: 15px; 
+            border: 1px solid #3d3d4e; /* Borde oscuro */
+            border-radius: 5px; 
+            background-color: #23232e; /* Fondo sutilmente distinto para agrupar elementos */
+        }
 
         .row {
-			display: flex;
-			gap: 10px;
-			margin-bottom: 10px;
-			align-items: center;
-			flex-wrap: wrap;
-		}
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
 
-		select, input { 
-			padding: 8px; 
-			border: 1px solid #4a4a5e; 
-			border-radius: 4px; 
-			background-color: #333342; /* Fondo de la caja de texto */
-			color: #ffffff; /* Letras blancas al escribir */
-		}
-		
-		input::placeholder { 
-			color: #888; /* Color gris para el texto de sugerencia */
-		}
+        /* Permite que los hijos flex puedan reducir su ancho sin forzar scroll */
+        .row > *, .result-box, .segment > * { min-width: 0; }
+
+        select, input { 
+            padding: 8px; 
+            border: 1px solid #4a4a5e; 
+            border-radius: 4px; 
+            background-color: #333342; /* Fondo de la caja de texto */
+            color: #ffffff; /* Letras blancas al escribir */
+        }
+        
+        input::placeholder { 
+            color: #888; /* Color gris para el texto de sugerencia */
+        }
 
         button { padding: 8px 15px; cursor: pointer; border: none; border-radius: 4px; background-color: #3498db; color: white; transition: 0.3s; }
         button:hover { background-color: #2980b9; }
         button.add-btn { background-color: #27ae60; font-weight: bold; }
 
-		.result-box { 
-			margin-top: 20px; 
-			padding: 15px; 
-			background: #1e272e; /* Fondo muy oscuro, casi negro */
-			border-left: 5px solid #0984e3; 
-			font-family: monospace; 
-			font-size: 1.2em; 
-			min-height: 1.5em; 
-			color: #00d2d3; /* Texto color cyan para que el código destaque */
-		}
-		
-		.translation-box { 
-			color: #b2bec3; /* Gris claro apagado para no robar atención */
-			font-style: italic; 
-			margin-top: 5px; 
-		}
+        .result-box { 
+            margin-top: 20px; 
+            padding: 15px; 
+            background: #1e272e; /* Fondo muy oscuro, casi negro */
+            border-left: 5px solid #0984e3; 
+            font-family: monospace; 
+            font-size: 1.2em; 
+            min-height: 1.5em; 
+            color: #00d2d3; /* Texto color cyan para que el código destaque */
+            min-width: 0; /* evitar que el flex hijo genere overflow */
+        }
+
+        .translation-box { 
+            color: #b2bec3; /* Gris claro apagado para no robar atención */
+            font-style: italic; 
+            margin-top: 5px; 
+        }
 
         .segment { 
             border-left: 3px solid #00b894; 
@@ -85,8 +93,20 @@
             padding-top: 10px;
             padding-bottom: 10px;
             border-radius: 0 4px 4px 0;
-            flex-wrap: nowrap; /* Fuerza a que todo quede en un solo renglón */
-            overflow-x: auto; /* Agrega scroll horizontal solo si la pantalla es diminuta */
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap; /* Permite que los controles salten de línea */
+            align-items: center;
+        }
+
+        .segment > * {
+            flex: 1 1 140px;
+            min-width: 90px;
+            max-width: 320px;
+        }
+
+        .segment input, .segment select {
+            min-width: 70px;
         }
 
         /* Limita el ancho de los selectores dentro de los segmentos */
@@ -253,11 +273,11 @@
                 <option value="">(Sin Parám.)</option>
                 ${Object.entries(DATA.parametro).map(([k,v]) => `<option value="${k}">${v} (${k})</option>`).join('')}
             </select>
-            <input type="text" class="s-cuad" placeholder="Cuadrante AB1234" oninput="updateCodification()" style="width:110px" maxlength="6">
-            <input type="text" class="s-ang" placeholder="Ángulo 045" oninput="updateCodification()" style="width:80px" maxlength="3">
-            <input type="text" class="s-dist" placeholder="Distancia 1234" oninput="updateCodification()" style="width:90px" maxlength="6">
-            <input type="text" class="s-time" placeholder="Hora HHMM" oninput="updateCodification()" style="width:80px" maxlength="4">
-            <input type="text" class="s-num" placeholder="Número (hasta 6 dígitos)" oninput="updateCodification()" style="width:140px" maxlength="6">
+            <input type="text" class="s-cuad" placeholder="Cuadrante AB1234" oninput="updateCodification()" maxlength="6">
+            <input type="text" class="s-ang" placeholder="Ángulo 045" oninput="updateCodification()" maxlength="3">
+            <input type="text" class="s-dist" placeholder="Distancia 1234" oninput="updateCodification()" maxlength="6">
+            <input type="text" class="s-time" placeholder="Hora HHMM" oninput="updateCodification()" maxlength="4">
+            <input type="text" class="s-num" placeholder="Número (hasta 6 dígitos)" oninput="updateCodification()" maxlength="6">
             <select class="s-est" onchange="updateCodification()">
                 <option value="">(Sin Estado)</option>
                 ${Object.entries(DATA.estado).map(([k,v]) => `<option value="${k}">${v} (${k})</option>`).join('')}
